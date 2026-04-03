@@ -1,0 +1,63 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import ProductDetails from './pages/ProductDetails';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+
+function Footer() {
+  return (
+    <footer className="bg-white border-t border-gray-100 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+          <div className="col-span-1 md:col-span-2">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">SwiftCart</h3>
+            <p className="text-gray-500 max-w-sm">
+              Your one-stop destination for premium essentials. We believe in quality, style, and exceptional customer service.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Shop</h4>
+            <ul className="space-y-2">
+              <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">New Arrivals</a></li>
+              <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Featured</a></li>
+              <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">All Products</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Support</h4>
+            <ul className="space-y-2">
+              <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Contact Us</a></li>
+              <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Shipping Policy</a></li>
+              <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Returns & Exchanges</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+          <p className="text-gray-400 text-sm">
+            © {new Date().getFullYear()} SwiftCart Ecommerce. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-white flex flex-col">
+        <Navbar />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </Router>
+  );
+}
