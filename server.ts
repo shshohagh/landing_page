@@ -93,11 +93,23 @@ async function initDb() {
 }
 
 async function startServer() {
-  await initDb();
+  console.log("Starting server...");
+  try {
+    await initDb();
+    console.log("Database initialized.");
+  } catch (err) {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
+  }
   const app = express();
   const PORT = 3000;
 
   app.use(express.json({ limit: '10mb' }));
+
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
 
   // Auth Middleware
   const authenticate = (req: any, res: any, next: any) => {
@@ -204,6 +216,7 @@ async function startServer() {
     });
   }
 
+  console.log(`Server starting on port ${PORT}...`);
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
