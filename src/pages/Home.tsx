@@ -1,12 +1,50 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProductCard from '../components/ProductCard';
 import { Product } from '../types';
-import { ShoppingBag, ChevronRight } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ShoppingBag, ChevronRight, ChevronLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+
+const SLIDES = [
+  {
+    id: 1,
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80",
+    title: "Premium Essentials",
+    description: "Discover our curated collection of high-quality products designed for the modern individual.",
+    cta: "Shop Collection"
+  },
+  {
+    id: 2,
+    image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600&q=80",
+    title: "Modern Style",
+    description: "Quality meets style in every piece. Elevate your daily routine with our exclusive items.",
+    cta: "Explore Style"
+  },
+  {
+    id: 3,
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1600&q=80",
+    title: "Exclusive Offers",
+    description: "Join our community today and get the best deals on our latest arrivals and seasonal picks.",
+    cta: "Join Now"
+  }
+];
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(nextSlide, 5000);
+    return () => clearInterval(timer);
+  }, [nextSlide]);
 
   useEffect(() => {
     fetch('/api/products')
@@ -31,42 +69,83 @@ export default function Home() {
 
   return (
     <div className="space-y-16 pb-20">
-      {/* Hero Section */}
-      <section className="relative h-[600px] flex items-center overflow-hidden bg-gray-900">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80"
-            alt="Hero"
-            className="w-full h-full object-cover opacity-40"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+      {/* Hero Slider Section */}
+      <section className="relative h-[500px] md:h-[600px] flex items-center overflow-hidden bg-gray-900">
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-2xl"
+            key={currentSlide}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="absolute inset-0 z-0"
           >
-            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6">
-              Elevate Your <span className="text-indigo-400">Lifestyle</span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-10 leading-relaxed">
-              Discover our curated collection of premium essentials designed for the modern individual. Quality meets style in every piece.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="#products"
-                className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-300 shadow-lg shadow-indigo-500/25"
-              >
-                Shop Collection
-                <ShoppingBag className="ml-2 h-5 w-5" />
-              </a>
-              <button className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-base font-bold rounded-full text-white hover:bg-white hover:text-gray-900 transition-all duration-300">
-                Learn More
-              </button>
-            </div>
+            <div className="absolute inset-0 bg-black/40 z-10" />
+            <img
+              src={SLIDES[currentSlide].image}
+              alt={SLIDES[currentSlide].title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
           </motion.div>
+        </AnimatePresence>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSlide}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.5 }}
+              className="max-w-2xl"
+            >
+              <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6">
+                {SLIDES[currentSlide].title}
+              </h1>
+              <p className="text-xl text-gray-200 mb-10 leading-relaxed">
+                {SLIDES[currentSlide].description}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a
+                  href="#products"
+                  className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-300 shadow-lg shadow-indigo-500/25"
+                >
+                  {SLIDES[currentSlide].cta}
+                  <ShoppingBag className="ml-2 h-5 w-5" />
+                </a>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Slider Controls */}
+        <div className="absolute bottom-8 right-8 z-30 flex gap-4">
+          <button
+            onClick={prevSlide}
+            className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/20"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all border border-white/20"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Indicators */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          {SLIDES.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-1.5 rounded-full transition-all ${
+                currentSlide === idx ? 'w-8 bg-indigo-500' : 'w-2 bg-white/50'
+              }`}
+            />
+          ))}
         </div>
       </section>
 
