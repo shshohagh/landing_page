@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Package, Truck, CheckCircle, Clock, ArrowLeft, MapPin, Phone, User } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, ArrowLeft, MapPin, Phone, User, ChevronRight } from 'lucide-react';
 import { Order } from '../types';
 import { formatPrice } from '../lib/utils';
 
@@ -14,8 +14,9 @@ const steps = [
 
 export default function OrderTracking() {
   const { id: urlId } = useParams();
-  const [searchId, setSearchId] = useState(urlId || '');
+  const [searchQuery, setSearchQuery] = useState(urlId || '');
   const [order, setOrder] = useState<(Order & { product_image?: string }) | null>(null);
+  const [searchResults, setSearchResults] = useState<(Order & { product_image?: string })[]>([]);
   const [loading, setLoading] = useState(!!urlId);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export default function OrderTracking() {
   const fetchOrder = (id: string) => {
     setLoading(true);
     setError(null);
+    setSearchResults([]);
     fetch(`/api/orders/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('Order not found');
@@ -46,25 +48,46 @@ export default function OrderTracking() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchId.trim()) {
-      fetchOrder(searchId.trim());
-    }
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setLoading(true);
+    setError(null);
+    setOrder(null);
+    setSearchResults([]);
+
+    fetch(`/api/orders/search?q=${encodeURIComponent(query)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.length === 0) {
+          setError('No orders found matching your search.');
+        } else if (data.length === 1) {
+          fetchOrder(data[0].id.toString());
+        } else {
+          setSearchResults(data);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('An error occurred while searching.');
+        setLoading(false);
+      });
   };
 
-  if (!urlId && !order && !loading) {
+  if (!urlId && !order && !loading && searchResults.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20">
         <div className="bg-white rounded-3xl border border-gray-100 p-12 shadow-sm text-center">
           <Package className="h-16 w-16 text-indigo-600 mx-auto mb-6" />
           <h1 className="text-3xl font-extrabold text-gray-900 mb-4">Track Your Order</h1>
-          <p className="text-gray-500 mb-8 text-lg">Enter your order ID to see the current status and estimated delivery time.</p>
+          <p className="text-gray-500 mb-8 text-lg">Enter your order ID, name, or phone number to see the current status.</p>
           
           <form onSubmit={handleSearch} className="max-w-md mx-auto flex gap-3">
             <input
               type="text"
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              placeholder="Order ID (e.g. 1)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Order ID, Name, or Phone"
               className="flex-grow px-6 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
             />
             <button
@@ -87,19 +110,75 @@ export default function OrderTracking() {
     );
   }
 
+  if (searchResults.length > 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <button onClick={() => setSearchResults([])} className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Search
+          </button>
+          
+          <form onSubmit={handleSearch} className="flex-grow max-w-md flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ID, Name, or Phone"
+              className="flex-grow px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all text-sm shadow-sm"
+            >
+              Track
+            </button>
+          </form>
+
+          <h1 className="text-2xl font-bold text-gray-900 whitespace-nowrap">Results ({searchResults.length})</h1>
+        </div>
+
+        <div className="grid gap-4">
+          {searchResults.map(result => (
+            <button
+              key={result.id}
+              onClick={() => fetchOrder(result.id.toString())}
+              className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-600 transition-all text-left flex items-center gap-6 group"
+            >
+              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0">
+                <img src={result.product_image} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+              </div>
+              <div className="flex-grow">
+                <div className="flex justify-between items-start mb-1">
+                  <h3 className="font-bold text-gray-900">Order #{result.id}</h3>
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg uppercase">
+                    {result.status}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500">{result.product_name}</p>
+                <p className="text-xs text-gray-400 mt-1">{new Date(result.created_at).toLocaleDateString()}</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-indigo-600" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (error || !order) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
         <div className="bg-red-50 rounded-3xl p-12 border border-red-100">
-          <h2 className="text-2xl font-bold text-red-900 mb-4">Order Not Found</h2>
-          <p className="text-red-700 mb-8">We couldn't find an order with the ID: {searchId}. Please check your order ID and try again.</p>
+          <h2 className="text-2xl font-bold text-red-900 mb-4">No Orders Found</h2>
+          <p className="text-red-700 mb-8">{error || "We couldn't find any orders matching your search."}</p>
           
           <form onSubmit={handleSearch} className="max-w-md mx-auto flex gap-3 mb-8">
             <input
               type="text"
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              placeholder="Order ID"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Order ID, Name, or Phone"
               className="flex-grow px-6 py-4 rounded-2xl border border-red-200 focus:ring-2 focus:ring-red-500 outline-none transition-all"
             />
             <button
@@ -127,12 +206,29 @@ export default function OrderTracking() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <Link to="/" className="inline-flex items-center text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Link>
-        <div className="text-right">
+        
+        <form onSubmit={handleSearch} className="flex-grow max-w-md flex gap-2">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search ID, Name, or Phone"
+            className="flex-grow px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
+          />
+          <button
+            type="submit"
+            className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all text-sm shadow-sm"
+          >
+            Track
+          </button>
+        </form>
+
+        <div className="text-right hidden md:block">
           <p className="text-sm text-gray-500">Order ID</p>
           <p className="text-lg font-bold text-gray-900">#{order.id}</p>
         </div>

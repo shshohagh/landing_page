@@ -303,6 +303,21 @@ async function startServer() {
     res.status(201).json({ id });
   });
 
+  app.get("/api/orders/search", async (req, res) => {
+    const { q } = req.query;
+    if (!q) return res.status(400).json({ error: "Search query is required" });
+
+    const orders = await db("orders")
+      .where("orders.id", "like", `%${q}%`)
+      .orWhere("orders.customer_name", "like", `%${q}%`)
+      .orWhere("orders.phone", "like", `%${q}%`)
+      .join("products", "orders.product_id", "=", "products.id")
+      .select("orders.*", "products.name as product_name", "products.price as product_price", "products.image as product_image")
+      .limit(20);
+
+    res.json(orders);
+  });
+
   app.get("/api/orders/:id", async (req, res) => {
     const order = await db("orders")
       .where("orders.id", req.params.id)

@@ -32,6 +32,7 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
@@ -58,6 +59,12 @@ export default function Home() {
         setLoading(false);
       });
   }, []);
+
+  const categories = ['All', ...Array.from(new Set(products.map(p => p.category || 'Uncategorized')))];
+
+  const filteredProducts = selectedCategory === 'All' 
+    ? products 
+    : products.filter(p => (p.category || 'Uncategorized') === selectedCategory);
 
   if (loading) {
     return (
@@ -151,28 +158,54 @@ export default function Home() {
 
       {/* Featured Products */}
       <section id="products" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Our Collection</h2>
             <p className="text-gray-500">Handpicked items just for you.</p>
           </div>
-          <button className="hidden sm:flex items-center text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
-            View All <ChevronRight className="ml-1 h-5 w-5" />
-          </button>
+          
+          {/* Category Filter */}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                  selectedCategory === category
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
+          <AnimatePresence mode="popLayout">
+            {filteredProducts.map((product, index) => (
+              <motion.div
+                key={product.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
+        
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-20">
+            <ShoppingBag className="h-16 w-16 text-gray-200 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900">No products found</h3>
+            <p className="text-gray-500">Try selecting a different category.</p>
+          </div>
+        )}
       </section>
 
       {/* Newsletter */}
