@@ -17,6 +17,7 @@ export interface Order {
   product_name?: string;
   product_price?: number;
   status: 'pending' | 'confirmed' | 'delivered';
+  estimated_delivery?: string;
   created_at: string;
 }
 
@@ -24,6 +25,15 @@ export interface User {
   id: number;
   name: string;
   email: string;
+}
+
+export interface Review {
+  id: number;
+  product_id: number;
+  customer_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
 }
 
 export interface AuthResponse {

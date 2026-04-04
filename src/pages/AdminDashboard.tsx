@@ -550,6 +550,7 @@ export default function AdminDashboard() {
                           <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Customer</th>
                           <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Product</th>
                           <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Est. Delivery</th>
                           <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Update Status</th>
                         </tr>
                       </thead>
@@ -576,6 +577,9 @@ export default function AdminDashboard() {
                                 {order.status === 'delivered' && <Truck className="h-3 w-3 mr-1" />}
                                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              {order.estimated_delivery ? new Date(order.estimated_delivery).toLocaleDateString() : 'N/A'}
                             </td>
                             <td className="px-6 py-4 text-right">
                               <select

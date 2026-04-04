@@ -98,9 +98,25 @@ async function initDb() {
         table.text("address").notNullable();
         table.integer("product_id").unsigned().references("id").inTable("products");
         table.string("status").defaultTo("pending"); // pending, confirmed, delivered
+        table.string("estimated_delivery");
         table.timestamp("created_at").defaultTo(db.fn.now());
       });
       console.log("Orders table created.");
+    }
+
+    const hasReviews = await db.schema.hasTable("reviews");
+    console.log("Reviews table exists:", hasReviews);
+    if (!hasReviews) {
+      console.log("Creating reviews table...");
+      await db.schema.createTable("reviews", (table) => {
+        table.increments("id").primary();
+        table.integer("product_id").unsigned().references("id").inTable("products").onDelete("CASCADE");
+        table.string("customer_name").notNullable();
+        table.integer("rating").notNullable();
+        table.text("comment").notNullable();
+        table.timestamp("created_at").defaultTo(db.fn.now());
+      });
+      console.log("Reviews table created.");
     }
   } catch (error) {
     console.error("Error in initDb:", error);
@@ -181,6 +197,37 @@ async function startServer() {
     res.json(product);
   });
 
+  // Reviews (Public)
+  app.get("/api/products/:id/reviews", async (req, res) => {
+    const reviews = await db("reviews")
+      .where({ product_id: req.params.id })
+      .orderBy("created_at", "desc");
+    res.json(reviews);
+  });
+
+  app.post("/api/products/:id/reviews", async (req, res) => {
+    const { customer_name, rating, comment } = req.body;
+    const product_id = req.params.id;
+
+    if (!customer_name || !rating || !comment) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+      const [id] = await db("reviews").insert({
+        product_id,
+        customer_name,
+        rating,
+        comment
+      });
+      const newReview = await db("reviews").where({ id }).first();
+      res.status(201).json(newReview);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to submit review" });
+    }
+  });
+
   // Products (Admin)
   app.post("/api/admin/products", authenticate, async (req, res) => {
     const [id] = await db("products").insert(req.body);
@@ -216,14 +263,29 @@ async function startServer() {
     if (!customer_name || !phone || !address || !product_id) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+    const estimated_delivery = new Date();
+    estimated_delivery.setDate(estimated_delivery.getDate() + 5); // 5 days estimate
+
     const [id] = await db("orders").insert({
       customer_name,
       phone,
       address,
       product_id,
-      status: "pending"
+      status: "pending",
+      estimated_delivery: estimated_delivery.toISOString()
     });
     res.status(201).json({ id });
+  });
+
+  app.get("/api/orders/:id", async (req, res) => {
+    const order = await db("orders")
+      .where("orders.id", req.params.id)
+      .join("products", "orders.product_id", "=", "products.id")
+      .select("orders.*", "products.name as product_name", "products.price as product_price", "products.image as product_image")
+      .first();
+    
+    if (!order) return res.status(404).json({ error: "Order not found" });
+    res.json(order);
   });
 
   // Orders (Admin)

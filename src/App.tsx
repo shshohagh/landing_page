@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
+import OrderTracking from './pages/OrderTracking';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -16,6 +17,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/track-order" element={<OrderTracking />} />
+          <Route path="/track-order/:id" element={<OrderTracking />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Routes>
@@ -47,6 +50,7 @@ function Footer() {
           <div>
             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Support</h4>
             <ul className="space-y-2">
+              <li><Link to="/track-order" className="text-gray-500 hover:text-indigo-600 text-sm">Track Order</Link></li>
               <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Contact Us</a></li>
               <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Shipping Policy</a></li>
               <li><a href="#" className="text-gray-500 hover:text-indigo-600 text-sm">Returns & Exchanges</a></li>

@@ -27,6 +27,7 @@ export default function Navbar() {
           {/* Desktop Menu */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-8">
             <Link to="/" className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Home</Link>
+            <Link to="/track-order" className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Track Order</Link>
             {isAuthenticated ? (
               <>
                 <Link to="/admin/dashboard" className="text-gray-600 hover:text-indigo-600 px-3 py-2 text-sm font-medium">Dashboard</Link>
@@ -68,6 +69,13 @@ export default function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               Home
+            </Link>
+            <Link
+              to="/track-order"
+              className="block px-3 py-2 text-base font-medium text-gray-600 hover:text-indigo-600 hover:bg-gray-50"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Track Order
             </Link>
             {isAuthenticated ? (
               <>
